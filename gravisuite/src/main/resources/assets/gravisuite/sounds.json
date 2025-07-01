@@ -1,0 +1,5 @@
+{
+  "Treetap": {"category": "master","sounds": [{"name": "Treetap","stream": false}]},
+  "toolChange": {"category": "master","sounds": [{"name": "toolChange","stream": false}]},
+  "wrench": {"category": "master","sounds": [{"name": "wrench","stream": false}]}
+  }
