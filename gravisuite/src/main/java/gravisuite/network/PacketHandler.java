@@ -43,20 +43,26 @@ public class PacketHandler {
       try {
          int packetId = data.readByte();
          switch(packetId) {
-         case 0:
+         case PacketsName.KEYS_UPDATE:
             PacketKeyboardUpdate packetKU = new PacketKeyboardUpdate();
             packetKU.readData(data);
             packetKU.execute(player);
             break;
-         case 1:
+         case PacketsName.KEY_PRESS:
             PacketKeyPress packetKP = new PacketKeyPress();
             packetKP.readData(data);
             packetKP.execute(player);
             break;
-         case 2:
+         case PacketsName.MANAGE_POINTS:
             PacketManagePoints packetMngPoint = new PacketManagePoints();
             packetMngPoint.readData(data);
             packetMngPoint.managePoint(player, packetMngPoint.pointName, packetMngPoint.action);
+            break;
+         case PacketsName.BREAK_BLOCKS:
+            PacketBreakBlocks packetBrkBlocks = new PacketBreakBlocks();
+            packetBrkBlocks.readData(data);
+            packetBrkBlocks.execute(player);
+            break;
          }
       } catch (Exception var8) {
          var8.printStackTrace();

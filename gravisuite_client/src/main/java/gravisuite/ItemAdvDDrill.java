@@ -38,7 +38,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.ArrayList;
 
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import gravisuite.network.PacketBreakBlocks;
+import gravisuite.network.Coords;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 
@@ -184,7 +185,6 @@ public class ItemAdvDDrill extends ItemTool implements IElectricItem
 			return false;
 		else
 		{
-            // System.out.println("ON BLOCK START BREAK client");
 			World world = player.worldObj;
 			Block block = world.getBlock(x, y, z);
 			int meta = world.getBlockMetadata(x, y, z);
@@ -218,7 +218,7 @@ public class ItemAdvDDrill extends ItemTool implements IElectricItem
 					boolean silktouch = EnchantmentHelper.getSilkTouchModifier(player);
 					int fortune = EnchantmentHelper.getFortuneModifier(player);
 					
-					ItemAdvDDrillBreakMessageHandler.ItemAdvDDrillBreakMessage breakmsg = new ItemAdvDDrillBreakMessageHandler.ItemAdvDDrillBreakMessage();
+					List<Coords> blList = new ArrayList<Coords>();
 
 					for (int xPos = x - xRange; xPos <= x + xRange; ++xPos)
 					{
@@ -270,7 +270,7 @@ public class ItemAdvDDrill extends ItemTool implements IElectricItem
 
 												world.func_147479_m(xPos, yPos, zPos);
 												
-                                                breakmsg.addBlock(xPos, yPos, zPos);
+                                                blList.add(new Coords(xPos, yPos, zPos));
 											}
 								}
 								else
@@ -282,12 +282,11 @@ public class ItemAdvDDrill extends ItemTool implements IElectricItem
 						}
 					}
 					
-					if(breakmsg.count > 0)
-                     GraviSuite.instance.sendMsgToServer(breakmsg);
+					if(blList.size() > 0)
+                     PacketBreakBlocks.issue(blList);
 
 					if (lowPower)
 						ServerProxy.sendPlayerMessage(player, "Not enough energy to complete this operation !");
-					// else if (!GraviSuite.isSimulating())
 					if (!GraviSuite.isSimulating())
 						world.playAuxSFX(2001, x, y, z, Block.getIdFromBlock(block) + (meta << 12));
 
@@ -299,10 +298,9 @@ public class ItemAdvDDrill extends ItemTool implements IElectricItem
 		}
 	}
 	
-    public void onBlockStartBreakAdditionalServerPart(ItemStack stack, List<ItemAdvDDrillBreakMessageHandler.ItemAdvDDrillBreakMessage.Triple> blocks, EntityPlayer player) {
+    public void onBlockStartBreakAdditionalServerPart(ItemStack stack, List<Coords> blocks, EntityPlayer player) {
          if (readToolMode(stack) != 3)
 			return;
-         // System.out.println("ADDITIONAL SERVER PART CALL");
          if(blocks.size() == 0) return;
          if(blocks.size() > 9) {
             System.err.println("TRYING TO BREAK TOO MANY BLOCKS(" + blocks.size() + "). BUG OR POSSIBLE HIJACK ATTEMPT?");
@@ -314,7 +312,7 @@ public class ItemAdvDDrill extends ItemTool implements IElectricItem
          int ymax = -Integer.MAX_VALUE;
          int zmin = Integer.MAX_VALUE;
          int zmax = -Integer.MAX_VALUE;
-         for(ItemAdvDDrillBreakMessageHandler.ItemAdvDDrillBreakMessage.Triple blockCoords : blocks) {
+         for(Coords blockCoords : blocks) {
 			if(blockCoords.getX() < xmin) xmin = blockCoords.getX();
 			else if(blockCoords.getX() > xmax) xmax = blockCoords.getX();
 			
@@ -334,7 +332,7 @@ public class ItemAdvDDrill extends ItemTool implements IElectricItem
          boolean silktouch = EnchantmentHelper.getSilkTouchModifier(player);
          int fortune = EnchantmentHelper.getFortuneModifier(player);
 
-         for(ItemAdvDDrillBreakMessageHandler.ItemAdvDDrillBreakMessage.Triple blockCoords : blocks) {
+         for(Coords blockCoords : blocks) {
             if (ElectricItem.manager.canUse(stack, this.energyPerOperation)) {
                Block localBlock = world.getBlock(blockCoords.getX(), blockCoords.getY(), blockCoords.getZ());
                if (localBlock != null && this.canHarvestBlock(localBlock, stack))

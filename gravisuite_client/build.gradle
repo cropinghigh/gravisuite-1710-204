@@ -34,7 +34,7 @@ compileJava {
 version = "2.0.4"
 
 group= "gravisuite"
-archivesBaseName = "GraviSuite"
+archivesBaseName = "GraviSuite-c"
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
 

@@ -54,12 +54,6 @@ import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.oredict.OreDictionary;
 import net.minecraftforge.oredict.ShapedOreRecipe;
 
-
-import cpw.mods.fml.common.network.NetworkRegistry;
-import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper;
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.relauncher.Side;
-
 import mekanism.api.ItemRetriever;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -162,8 +156,6 @@ public class GraviSuite {
    public static PacketHandler packetHandler;
    @Instance("GraviSuite")
    public static GraviSuite instance;
-
-   private SimpleNetworkWrapper customPacketHandler = NetworkRegistry.INSTANCE.newSimpleChannel("GS_custPackets");
 
    public static final byte PICKUP_TICK_DELAY = 1;
 
@@ -318,7 +310,6 @@ public class GraviSuite {
       packetHandler = new PacketHandler();
       NetworkRegistry.INSTANCE.registerGuiHandler(this, new GuiHandler());
 
-      customPacketHandler.registerMessage(ItemAdvDDrillBreakMessageHandler.class, ItemAdvDDrillBreakMessageHandler.ItemAdvDDrillBreakMessage.class, 1, Side.SERVER);
       queuedPickupEvents = new ArrayList<QueuedPickupEvent>();
       evtHdl = new GSEventHandler();
    }
@@ -411,9 +402,5 @@ public class GraviSuite {
       }
 
       return nbttagcompound;
-   }
-
-   public void sendMsgToServer(IMessage message) {
-      customPacketHandler.sendToServer(message);
    }
 }

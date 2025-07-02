@@ -38,7 +38,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.ArrayList;
 
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import gravisuite.network.PacketBreakBlocks;
+import gravisuite.network.Coords;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 
@@ -60,10 +61,12 @@ public class ItemAdvIrDrill extends ItemTool implements IElectricItem
 	private float Hole5x5Power = 30F;
 	private float Hole3x3Power = 45F;
 	private float normalPower = 55F;
+	private float finePower = 16F;
 	private int maxCharge = 1000000;
 	private int tier = 3;
 	private int maxWorkRange = 1;
 	private int energyPerOperation = 160;
+	private int energyPerFineOperation = 50;
 	private int transferLimit = 5000;
 	public int soundTicker;
 	public int damageVsEntity = 1;
@@ -141,12 +144,15 @@ public class ItemAdvIrDrill extends ItemTool implements IElectricItem
 				this.efficiencyOnProperMaterial = this.normalPower;
 				break;
 			case 1:
-				this.efficiencyOnProperMaterial = this.Hole3x3Power;
+				this.efficiencyOnProperMaterial = this.finePower;
 				break;
 			case 2:
-				this.efficiencyOnProperMaterial = this.Hole5x5Power;
+				this.efficiencyOnProperMaterial = this.Hole3x3Power;
 				break;
 			case 3:
+				this.efficiencyOnProperMaterial = this.Hole5x5Power;
+				break;
+			case 4:
 				this.efficiencyOnProperMaterial = this.Hole7x7Power;
 				break;
 		}
@@ -184,11 +190,10 @@ public class ItemAdvIrDrill extends ItemTool implements IElectricItem
 
 	public boolean onBlockStartBreak(ItemStack stack, int x, int y, int z, EntityPlayer player)
 	{
-		if (readToolMode(stack) == 0)
+		if (readToolMode(stack) < 2)
 			return false;
 		else
 		{
-            // System.out.println("ON BLOCK START BREAK client");
 			World world = player.worldObj;
 			Block block = world.getBlock(x, y, z);
 			int meta = world.getBlockMetadata(x, y, z);
@@ -202,13 +207,13 @@ public class ItemAdvIrDrill extends ItemTool implements IElectricItem
 				if(!FMLCommonHandler.instance().getEffectiveSide().isClient()) { return true; }
 					byte range = 1;
 					switch(readToolMode(stack)) {
-						case 1:
+						case 2:
 							range = 1;
 							break;
-						case 2:
+						case 3:
 							range = 2;
 							break;
-						case 3:
+						case 4:
 							range = 3;
 							break;
 					}
@@ -241,7 +246,7 @@ public class ItemAdvIrDrill extends ItemTool implements IElectricItem
 					boolean silktouch = EnchantmentHelper.getSilkTouchModifier(player);
 					int fortune = EnchantmentHelper.getFortuneModifier(player);
 					
-					ItemAdvDDrillBreakMessageHandler.ItemAdvDDrillBreakMessage breakmsg = new ItemAdvDDrillBreakMessageHandler.ItemAdvDDrillBreakMessage();
+					List<Coords> blList = new ArrayList<Coords>();
 
 					for (int xPos = x - xRange; xPos <= x + xRange; ++xPos)
 					{
@@ -293,7 +298,7 @@ public class ItemAdvIrDrill extends ItemTool implements IElectricItem
 
 												world.func_147479_m(xPos, yPos, zPos);
 												
-												breakmsg.addBlock(xPos, yPos, zPos);
+												blList.add(new Coords(xPos, yPos, zPos));
 											}
 								}
 								else
@@ -305,12 +310,11 @@ public class ItemAdvIrDrill extends ItemTool implements IElectricItem
 						}
 					}
 					
-					if(breakmsg.count > 0)
-                     GraviSuite.instance.sendMsgToServer(breakmsg);
+					if(blList.size() > 0)
+                     PacketBreakBlocks.issue(blList);
 
 					if (lowPower)
 						ServerProxy.sendPlayerMessage(player, "Not enough energy to complete this operation !");
-					// else if (!GraviSuite.isSimulating())
 					if (!GraviSuite.isSimulating())
 						world.playAuxSFX(2001, x, y, z, Block.getIdFromBlock(block) + (meta << 12));
 
@@ -322,22 +326,22 @@ public class ItemAdvIrDrill extends ItemTool implements IElectricItem
 		}
 	}
 	
-    public void onBlockStartBreakAdditionalServerPart(ItemStack stack, List<ItemAdvDDrillBreakMessageHandler.ItemAdvDDrillBreakMessage.Triple> blocks, EntityPlayer player) {
-         // System.out.println("ADDITIONAL SERVER PART CALL");
+    public void onBlockStartBreakAdditionalServerPart(ItemStack stack, List<Coords> blocks, EntityPlayer player) {
          byte maxsize = 9;
          byte maxrange = 3;
 		switch(readToolMode(stack)) {
 			case 0:
-				return;
 			case 1:
+				return;
+			case 2:
 				maxrange = 3;
 				maxsize = 3*3;
 				break;
-			case 2:
+			case 3:
 				maxrange = 5;
 				maxsize = 5*5;
 				break;
-			case 3:
+			case 4:
 				maxrange = 7;
 				maxsize = 7*7;
 				break;
@@ -358,7 +362,7 @@ public class ItemAdvIrDrill extends ItemTool implements IElectricItem
          int ymax = -Integer.MAX_VALUE;
          int zmin = Integer.MAX_VALUE;
          int zmax = -Integer.MAX_VALUE;
-         for(ItemAdvDDrillBreakMessageHandler.ItemAdvDDrillBreakMessage.Triple blockCoords : blocks) {
+         for(Coords blockCoords : blocks) {
 			if(blockCoords.getX() < xmin) xmin = blockCoords.getX();
 			else if(blockCoords.getX() > xmax) xmax = blockCoords.getX();
 			
@@ -374,7 +378,7 @@ public class ItemAdvIrDrill extends ItemTool implements IElectricItem
             return;
          }
 
-         for(ItemAdvDDrillBreakMessageHandler.ItemAdvDDrillBreakMessage.Triple blockCoords : blocks) {
+         for(Coords blockCoords : blocks) {
             if (ElectricItem.manager.canUse(stack, this.energyPerOperation)) {
                Block localBlock = world.getBlock(blockCoords.getX(), blockCoords.getY(), blockCoords.getZ());
                if (localBlock != null && this.canHarvestBlock(localBlock, stack))
@@ -438,12 +442,6 @@ public class ItemAdvIrDrill extends ItemTool implements IElectricItem
          qpe.boundingBox = AxisAlignedBB.getBoundingBox(xmin-PICKUP_RADIUS, ymin-PICKUP_RADIUS, zmin-PICKUP_RADIUS, xmax+PICKUP_RADIUS, ymax+PICKUP_RADIUS, zmax+PICKUP_RADIUS);
          qpe.ticked = 0;
          GraviSuite.queuePickupEvent(qpe);
-         // List<EntityItem> items = world.getEntitiesWithinAABB(EntityItem.class, AxisAlignedBB.getBoundingBox(xmin-PICKUP_RADIUS, ymin-PICKUP_RADIUS, zmin-PICKUP_RADIUS, xmax+PICKUP_RADIUS, ymax+PICKUP_RADIUS, zmax+PICKUP_RADIUS));
-		// System.out.println(items.size() + " ITEMS IN BOX");
-		// for (EntityItem item : items) {
-			// EntityItemPickupEvent evt = new EntityItemPickupEvent(player, item);
-			// MinecraftForge.EVENT_BUS.post(evt);
-		// }
 	}
 
 	@Override
@@ -457,8 +455,21 @@ public class ItemAdvIrDrill extends ItemTool implements IElectricItem
 		{
 			if (entity != null)
 			{
-				if (this.energyPerOperation != 0F && block.getBlockHardness(world, xPos, yPos, zPos) != 0F)
-					ElectricItem.manager.use(stack, this.energyPerOperation, entity);
+				int toolMode = readToolMode(stack);
+				float energy;
+
+				switch (toolMode)
+				{
+					case 1:
+						energy = this.energyPerFineOperation;
+						break;
+					default:
+						energy = this.energyPerOperation;
+						break;
+				}
+			
+				if (energy != 0F && block.getBlockHardness(world, xPos, yPos, zPos) != 0F)
+					ElectricItem.manager.use(stack, energy, entity);
 			}
 
 			return true;
@@ -471,11 +482,11 @@ public class ItemAdvIrDrill extends ItemTool implements IElectricItem
 		int toolMode = nbt.getInteger("toolMode");
 
 		// TODO gamerforEA code start
-		// if (EventConfig.disableAdvDDrillBigHoleMode)
+		// if (EventConfig.disableAdvDDrillBigHoleMode && toolMode > 1)
 			// toolMode = 0;
 		// TODO gamerforEA code end
 
-		if (toolMode < 0 || toolMode > 3)
+		if (toolMode < 0 || toolMode > 4)
 			toolMode = 0;
 
 		return toolMode;
@@ -551,11 +562,11 @@ public class ItemAdvIrDrill extends ItemTool implements IElectricItem
 				int toolMode = readToolMode(itemStack) + 1;
 
 				// TODO gamerforEA code start
-				// if (EventConfig.disableAdvDDrillBigHoleMode)
+				// if (EventConfig.disableAdvDDrillBigHoleMode && toolMode > 1)
 					// toolMode = 0;
 				// TODO gamerforEA code end
 
-				if (toolMode > 3)
+				if (toolMode > 4)
 					toolMode = 0;
 
 				this.saveToolMode(itemStack, toolMode);
@@ -566,14 +577,18 @@ public class ItemAdvIrDrill extends ItemTool implements IElectricItem
 						this.efficiencyOnProperMaterial = this.normalPower;
 						break;
 					case 1:
+						ServerProxy.sendPlayerMessage(player, EnumChatFormatting.AQUA + Helpers.formatMessage("message.text.mode") + ": " + Helpers.formatMessage("message.advDDrill.mode.fine"));
+						this.efficiencyOnProperMaterial = this.finePower;
+						break;
+					case 2:
 						ServerProxy.sendPlayerMessage(player, EnumChatFormatting.GOLD + Helpers.formatMessage("message.text.mode") + ": 3x3");
 						this.efficiencyOnProperMaterial = this.Hole3x3Power;
 						break;
-					case 2:
+					case 3:
 						ServerProxy.sendPlayerMessage(player, EnumChatFormatting.AQUA + Helpers.formatMessage("message.text.mode") + ": 5x5");
 						this.efficiencyOnProperMaterial = this.Hole5x5Power;
 						break;
-					case 3:
+					case 4:
 						ServerProxy.sendPlayerMessage(player, EnumChatFormatting.LIGHT_PURPLE + Helpers.formatMessage("message.text.mode") + ": 7x7");
 						this.efficiencyOnProperMaterial = this.Hole7x7Power;
 						break;
@@ -625,18 +640,21 @@ public class ItemAdvIrDrill extends ItemTool implements IElectricItem
 				mode = "normal";
 				break;
 			case 1:
-				mode = "3x3";
+				mode = "fine";
 				break;
 			case 2:
-				mode = "5x5";
+				mode = "3x3";
 				break;
 			case 3:
+				mode = "5x5";
+				break;
+			case 4:
 				mode = "7x7";
 				break;
 		}
 
 		if (mode != null) {
-			if(mode == "normal")
+			if(toolMode < 2)
 				par3List.add(EnumChatFormatting.GOLD + Helpers.formatMessage("message.text.mode") + ": " + EnumChatFormatting.WHITE + Helpers.formatMessage("message.advDDrill.mode." + mode));
 			else
 				par3List.add(EnumChatFormatting.GOLD + Helpers.formatMessage("message.text.mode") + ": " + EnumChatFormatting.WHITE + mode);
