@@ -364,16 +364,16 @@ public class ItemAdvIrDrill extends ItemTool implements IElectricItem
          int zmax = -Integer.MAX_VALUE;
          for(Coords blockCoords : blocks) {
 			if(blockCoords.getX() < xmin) xmin = blockCoords.getX();
-			else if(blockCoords.getX() > xmax) xmax = blockCoords.getX();
+			if(blockCoords.getX() > xmax) xmax = blockCoords.getX();
 			
 			if(blockCoords.getY() < ymin) ymin = blockCoords.getY();
-			else if(blockCoords.getY() > ymax) ymax = blockCoords.getY();
+			if(blockCoords.getY() > ymax) ymax = blockCoords.getY();
 			
 			if(blockCoords.getZ() < zmin) zmin = blockCoords.getZ();
-			else if(blockCoords.getZ() > zmax) zmax = blockCoords.getZ();
+			if(blockCoords.getZ() > zmax) zmax = blockCoords.getZ();
          }
 
-         if((xmax - xmin) > maxrange || (ymax-ymin) > maxrange || (zmax-zmin) > maxrange) {
+         if(blocks.size() > 1 && ((xmax - xmin) > maxrange || (ymax-ymin) > maxrange || (zmax-zmin) > maxrange)) {
 			System.err.println("TRYING TO BREAK TOO FAR AWAY BLOCKS(X " + (xmax-xmin) + " Y " + (ymax-ymin) + " Z " + (zmax-zmin) + "). BUG OR POSSIBLE HIJACK ATTEMPT?");
             return;
          }
