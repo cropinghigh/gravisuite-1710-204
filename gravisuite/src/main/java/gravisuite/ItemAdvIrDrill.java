@@ -24,6 +24,7 @@ import net.minecraft.init.Items;
 import net.minecraft.item.*;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.play.server.S23PacketBlockChange;
+import net.minecraft.network.play.server.S18PacketEntityTeleport;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
@@ -436,12 +437,18 @@ public class ItemAdvIrDrill extends ItemTool implements IElectricItem
                break;
             }
          }
-         GraviSuite.QueuedPickupEvent qpe = GraviSuite.instance.new QueuedPickupEvent();
-         qpe.player = player;
-         qpe.world = world;
-         qpe.boundingBox = AxisAlignedBB.getBoundingBox(xmin-PICKUP_RADIUS, ymin-PICKUP_RADIUS, zmin-PICKUP_RADIUS, xmax+PICKUP_RADIUS, ymax+PICKUP_RADIUS, zmax+PICKUP_RADIUS);
-         qpe.ticked = 0;
-         GraviSuite.queuePickupEvent(qpe);
+         // GraviSuite.QueuedPickupEvent qpe = GraviSuite.instance.new QueuedPickupEvent();
+         // qpe.player = player;
+         // qpe.world = world;
+         // qpe.boundingBox = AxisAlignedBB.getBoundingBox(xmin-PICKUP_RADIUS, ymin-PICKUP_RADIUS, zmin-PICKUP_RADIUS, xmax+PICKUP_RADIUS, ymax+PICKUP_RADIUS, zmax+PICKUP_RADIUS);
+         // qpe.ticked = 0;
+         // GraviSuite.queuePickupEvent(qpe);
+         List<EntityItem> items = player.worldObj.getEntitiesWithinAABB(EntityItem.class, AxisAlignedBB.getBoundingBox(xmin-PICKUP_RADIUS, ymin-PICKUP_RADIUS, zmin-PICKUP_RADIUS, xmax+PICKUP_RADIUS, ymax+PICKUP_RADIUS, zmax+PICKUP_RADIUS));
+		for (EntityItem item : items) {
+			item.setLocationAndAngles(player.posX, player.posY, player.posZ, 0, 0);
+			((EntityPlayerMP) player).playerNetServerHandler.sendPacket(new S18PacketEntityTeleport(item));
+			item.delayBeforeCanPickup = 0;
+		}
 	}
 
 	@Override
