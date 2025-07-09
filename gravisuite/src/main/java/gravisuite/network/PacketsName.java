@@ -5,4 +5,5 @@ public class PacketsName {
    public static final byte KEY_PRESS = 1;
    public static final byte MANAGE_POINTS = 2;
    public static final byte BREAK_BLOCKS = 3;
+   public static final byte TUNE_IR_DRILL = 4;
 }

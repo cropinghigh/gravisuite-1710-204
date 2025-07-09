@@ -67,3 +67,7 @@ message.relocator.text.defaultPointSet=Default teleport point set to
 
 message.text.centermode=Center mode
 item.advIrDrill.name=Advanced Iridium Drill
+item.advIrDrill.gui.name=Drill settings
+item.advIrDrill.gui.autosuck=Autosuck
+item.advIrDrill.gui.power=Power
+item.advIrDrill.gui.exit=Exit

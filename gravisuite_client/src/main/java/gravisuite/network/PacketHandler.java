@@ -63,6 +63,10 @@ public class PacketHandler {
             packetBrkBlocks.readData(data);
             packetBrkBlocks.execute(player);
             break;
+         case PacketsName.TUNE_IR_DRILL:
+            PacketTuneIrDrill packetTuneIrDrill = new PacketTuneIrDrill();
+            packetTuneIrDrill.readData(data);
+            packetTuneIrDrill.execute(player);
          }
       } catch (Exception var8) {
          var8.printStackTrace();

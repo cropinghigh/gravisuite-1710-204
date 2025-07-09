@@ -67,3 +67,7 @@ message.relocator.text.defaultPointSet=Точка по умолчанию зад
 
 message.text.centermode=Центральный режим
 item.advIrDrill.name=Улучшенный иридиевый бур
+item.advIrDrill.gui.name=Настройки бура
+item.advIrDrill.gui.autosuck=Автоподбор
+item.advIrDrill.gui.power=Мощность
+item.advIrDrill.gui.exit=Выход
